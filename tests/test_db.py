@@ -24,3 +24,13 @@ def test_chromadb_basic_persistence():
 
     db2 = ChromaDB()
     assert db2.count() == 3
+
+
+def test_collection_management():
+    db = ChromaDB()
+    collections = db.list_collections()
+    assert any(c == "names" for c in collections)
+
+    db.delete_collection("names")
+    collections_after = db.list_collections()
+    assert "names" not in collections_after

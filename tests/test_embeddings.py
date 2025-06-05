@@ -1,5 +1,6 @@
 import importlib
 import os
+
 import pytest
 
 from name_matching import embeddings
@@ -16,5 +17,5 @@ def test_get_embedding_shape():
 def test_bad_api_key(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "bad-key")
     importlib.reload(embeddings)  # reload to pick up new key
-    with pytest.raises(Exception):
+    with pytest.raises(Exception):  # noqa: B017 - generic exception raised by client
         embeddings.get_embedding("test")

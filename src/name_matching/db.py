@@ -55,3 +55,13 @@ class ChromaDB:
     def count(self) -> int:
         """Return the number of items stored in the collection."""
         return self.collection.count()
+
+    def delete_collection(self, name: str | None = None) -> None:
+        """Delete the specified collection or the current one."""
+        if name is None:
+            name = self.collection.name
+        self.client.delete_collection(name)
+
+    def list_collections(self) -> list[str]:
+        """Return a list of collection names available in the client."""
+        return [c.name for c in self.client.list_collections()]
