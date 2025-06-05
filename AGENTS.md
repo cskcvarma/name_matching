@@ -10,3 +10,4 @@
     - uv remove --dev <dependency_name> to remove a dev dependency
 4. Make sure all your code is tested before submitting a PR
 5. Test coverage should be above 80%
+6. All files should be created inside the src/name_matching directory
