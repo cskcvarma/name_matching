@@ -1,0 +1,27 @@
+# .github/workflows/test.yml
+name: Run Tests with Nox
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install nox
+        run: .venv/bin/pip install nox
+
+      - name: Run tests with nox
+        run: .venv/bin/nox -s tests
