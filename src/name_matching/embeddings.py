@@ -1,8 +1,8 @@
 """Helper functions to get embeddings from OpenAI."""
+
 from __future__ import annotations
 
 import os
-from typing import List
 
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -23,14 +23,14 @@ def _get_client() -> OpenAI:
     return _client
 
 
-def get_embedding(text: str) -> List[float]:
+def get_embedding(text: str) -> list[float]:
     """Return a single embedding vector for ``text``."""
     client = _get_client()
     response = client.embeddings.create(input=text, model=_MODEL_NAME)
     return response.data[0].embedding
 
 
-def get_embeddings_batch(texts: List[str]) -> List[List[float]]:
+def get_embeddings_batch(texts: list[str]) -> list[list[float]]:
     """Return embedding vectors for ``texts``."""
     client = _get_client()
     response = client.embeddings.create(input=texts, model=_MODEL_NAME)
