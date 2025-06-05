@@ -12,6 +12,15 @@ source .venv/bin/activate
 uv sync
 ```
 
+### Linting and tests
+
+Use [`nox`](https://nox.thea.codes/) to run lint and test sessions:
+
+```bash
+nox -s lint
+nox -s tests
+```
+
 ## Usage
 
 Run the program using the installed command or module:
