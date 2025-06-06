@@ -1,14 +1,18 @@
+from __future__ import annotations
+
 import hashlib
 import math
 import uuid
+from collections import defaultdict
 
 import chromadb
+
+_clients: defaultdict[str, chromadb.ClientAPI] = defaultdict(chromadb.EphemeralClient)
 
 
 def _embed(text: str) -> list[float]:
     """Create a deterministic embedding from a string using SHA256."""
     digest = hashlib.sha256(text.lower().encode("utf-8")).digest()
-    # Use the raw bytes as small-dimensional vector
     return list(digest)
 
 
@@ -20,23 +24,22 @@ def _normalize(vec: list[float]) -> list[float]:
 
 
 class ChromaDB:
-    """Lightweight wrapper around a persistent Chroma collection."""
+    """Wrapper around a Chroma collection using an in-memory client."""
 
-    def __init__(self, path: str = "./chroma_store") -> None:
-        self.client = chromadb.PersistentClient(path=path)
+    def __init__(self, path: str = "./chroma_store", collection_name: str = "names") -> None:
+        self.client = _clients[path]
+        self.collection_name = collection_name
         self.collection = self.client.get_or_create_collection(
-            "names",
+            collection_name,
             metadata={"hnsw:space": "l2"},
         )
 
     def add_names_batch(self, names: list[str]) -> None:
-        """Add a batch of names to the collection."""
         embeddings = [_normalize(_embed(n)) for n in names]
         ids = [str(uuid.uuid4()) for _ in names]
         self.collection.add(ids=ids, documents=names, embeddings=embeddings)
 
     def query_embedding(self, text: str, top_k: int, threshold: float) -> list[str]:
-        """Query the collection with a piece of text."""
         query_embedding = [_normalize(_embed(text))]
         result = self.collection.query(
             query_embeddings=query_embedding,
@@ -47,21 +50,18 @@ class ChromaDB:
         dists = result["distances"][0]
         matches: list[str] = []
         for doc, dist in zip(docs, dists, strict=False):
-            cosine = 1 - dist / 2  # convert L2 (squared) to cosine similarity
+            cosine = 1 - dist / 2
             if cosine >= threshold:
                 matches.append(doc)
         return matches
 
     def count(self) -> int:
-        """Return the number of items stored in the collection."""
         return self.collection.count()
 
     def delete_collection(self, name: str | None = None) -> None:
-        """Delete the specified collection or the current one."""
         if name is None:
-            name = self.collection.name
+            name = self.collection_name
         self.client.delete_collection(name)
 
     def list_collections(self) -> list[str]:
-        """Return a list of collection names available in the client."""
         return [c.name for c in self.client.list_collections()]
