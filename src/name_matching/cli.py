@@ -31,6 +31,25 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Collection to search (default: names)",
     )
 
+    list_parser = sub.add_parser("list", help="List names in a collection")
+    list_parser.add_argument(
+        "--direction",
+        choices=["top", "bottom"],
+        default="top",
+        help="List from the top or bottom of the collection (default: top)",
+    )
+    list_parser.add_argument(
+        "--count",
+        type=int,
+        default=10,
+        help="Number of names to list (default: 10)",
+    )
+    list_parser.add_argument(
+        "--collection",
+        default="names",
+        help="Collection to list from (default: names)",
+    )
+
     return parser
 
 
@@ -50,6 +69,13 @@ def main(argv: list[str] | None = None) -> None:
         matches = matcher.find_matches(args.name)
         for match in matches:
             print(match)
+    elif args.command == "list":
+        db_instance = ChromaDB(collection_name=args.collection)
+        names = db_instance.list_documents()
+        count = args.count
+        selected = names[:count] if args.direction == "top" else names[-count:]
+        for name in selected:
+            print(name)
 
 
 if __name__ == "__main__":  # pragma: no cover - manual invocation
