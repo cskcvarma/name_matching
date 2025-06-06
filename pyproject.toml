@@ -50,4 +50,5 @@ dev = [
     "pytest-cov>=4.1",
     "ruff>=0.1.0",
     "nox>=2024.4.15",
+    "ipykernel>=6.29.5",
 ]
