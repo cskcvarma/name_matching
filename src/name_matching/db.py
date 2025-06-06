@@ -24,10 +24,10 @@ def _normalize(vec: list[float]) -> list[float]:
 
 
 class ChromaDB:
-    """Wrapper around a Chroma collection using an in-memory client."""
+    """Wrapper around a Chroma collection using a persistent client."""
 
     def __init__(self, path: str = "./chroma_store", collection_name: str = "names") -> None:
-        self.client = _clients[path]
+        self.client = chromadb.PersistentClient(path=path)
         self.collection_name = collection_name
         self.collection = self.client.get_or_create_collection(
             collection_name,

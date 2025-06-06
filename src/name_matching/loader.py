@@ -24,6 +24,7 @@ def load_fake_names(
     ChromaDB
         The database instance containing the generated names.
     """
+    print(f"Loading {count} fake names into collection '{collection_name}'.")
     fake = Faker()
     names = [f"{fake.first_name()} {fake.last_name()}" for _ in range(count)]
     db = ChromaDB(path=path, collection_name=collection_name)
