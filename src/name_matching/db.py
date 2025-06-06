@@ -65,3 +65,8 @@ class ChromaDB:
 
     def list_collections(self) -> list[str]:
         return [c.name for c in self.client.list_collections()]
+
+    def list_documents(self) -> list[str]:
+        """Return all documents stored in the collection."""
+        results = self.collection.get(include=["documents"])
+        return results.get("documents", [])

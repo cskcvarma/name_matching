@@ -1,6 +1,8 @@
 import argparse
 
+from .db import ChromaDB
 from .loader import load_fake_names
+from .matcher import NameMatcher
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -14,6 +16,21 @@ def _build_parser() -> argparse.ArgumentParser:
         required=True,
         help="Name of the collection to populate",
     )
+
+    match_parser = sub.add_parser("match", help="Find matches for a name")
+    match_parser.add_argument("--name", required=True, help="Query name")
+    match_parser.add_argument(
+        "--type",
+        choices=["fuzzy", "embedding", "hybrid"],
+        required=True,
+        help="Matching algorithm to use",
+    )
+    match_parser.add_argument(
+        "--collection",
+        default="names",
+        help="Collection to search (default: names)",
+    )
+
     return parser
 
 
@@ -26,6 +43,13 @@ def main(argv: list[str] | None = None) -> None:
         print(
             f"Loaded {db.count()} names into collection '{args.collection}'.",
         )
+    elif args.command == "match":
+        db_instance = ChromaDB(collection_name=args.collection)
+        names = db_instance.list_documents()
+        matcher = NameMatcher(names, mode=args.type)
+        matches = matcher.find_matches(args.name)
+        for match in matches:
+            print(match)
 
 
 if __name__ == "__main__":  # pragma: no cover - manual invocation
