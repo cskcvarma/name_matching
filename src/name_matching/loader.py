@@ -5,7 +5,12 @@ from faker import Faker
 from .db import ChromaDB
 
 
-def load_fake_names(count: int, *, path: str = "./chroma_store") -> ChromaDB:
+def load_fake_names(
+    count: int,
+    *,
+    path: str = "./chroma_store",
+    collection_name: str = "names",
+) -> ChromaDB:
     """Generate ``count`` fake names and store them in a :class:`ChromaDB`.
 
     Parameters
@@ -21,6 +26,6 @@ def load_fake_names(count: int, *, path: str = "./chroma_store") -> ChromaDB:
     """
     fake = Faker()
     names = [f"{fake.first_name()} {fake.last_name()}" for _ in range(count)]
-    db = ChromaDB(path=path)
+    db = ChromaDB(path=path, collection_name=collection_name)
     db.add_names_batch(names)
     return db
