@@ -41,3 +41,33 @@ def test_match_command_returns_results(capsys):
     )
     captured = capsys.readouterr()
     assert "John Doe" in captured.out
+
+
+def test_list_command_defaults_to_top_10(capsys):
+    collection = "cli_list_default"
+    db_instance = db.ChromaDB(collection_name=collection)
+    db_instance.add_names_batch(["A", "B", "C", "D"])
+
+    cli.main(["list", "--collection", collection])
+    captured = capsys.readouterr()
+    assert captured.out.strip().splitlines() == ["A", "B", "C", "D"]
+
+
+def test_list_command_bottom(capsys):
+    collection = "cli_list_bottom"
+    db_instance = db.ChromaDB(collection_name=collection)
+    db_instance.add_names_batch(["A", "B", "C", "D"])
+
+    cli.main(
+        [
+            "list",
+            "--collection",
+            collection,
+            "--direction",
+            "bottom",
+            "--count",
+            "2",
+        ]
+    )
+    captured = capsys.readouterr()
+    assert captured.out.strip().splitlines() == ["C", "D"]
