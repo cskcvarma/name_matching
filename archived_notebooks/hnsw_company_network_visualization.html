@@ -1,0 +1,321 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script>function neighbourhoodHighlight(params) {
+  // console.log("in nieghbourhoodhighlight");
+  allNodes = nodes.get({ returnType: "Object" });
+  // originalNodes = JSON.parse(JSON.stringify(allNodes));
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    highlightActive = true;
+    var i, j;
+    var selectedNode = params.nodes[0];
+    var degrees = 2;
+
+    // mark all nodes as hard to read.
+    for (let nodeId in allNodes) {
+      // nodeColors[nodeId] = allNodes[nodeId].color;
+      allNodes[nodeId].color = "rgba(200,200,200,0.5)";
+      if (allNodes[nodeId].hiddenLabel === undefined) {
+        allNodes[nodeId].hiddenLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+    var connectedNodes = network.getConnectedNodes(selectedNode);
+    var allConnectedNodes = [];
+
+    // get the second degree nodes
+    for (i = 1; i < degrees; i++) {
+      for (j = 0; j < connectedNodes.length; j++) {
+        allConnectedNodes = allConnectedNodes.concat(
+          network.getConnectedNodes(connectedNodes[j])
+        );
+      }
+    }
+
+    // all second degree nodes get a different color and their label back
+    for (i = 0; i < allConnectedNodes.length; i++) {
+      // allNodes[allConnectedNodes[i]].color = "pink";
+      allNodes[allConnectedNodes[i]].color = "rgba(150,150,150,0.75)";
+      if (allNodes[allConnectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[allConnectedNodes[i]].label =
+          allNodes[allConnectedNodes[i]].hiddenLabel;
+        allNodes[allConnectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // all first degree nodes get their own color and their label back
+    for (i = 0; i < connectedNodes.length; i++) {
+      // allNodes[connectedNodes[i]].color = undefined;
+      allNodes[connectedNodes[i]].color = nodeColors[connectedNodes[i]];
+      if (allNodes[connectedNodes[i]].hiddenLabel !== undefined) {
+        allNodes[connectedNodes[i]].label =
+          allNodes[connectedNodes[i]].hiddenLabel;
+        allNodes[connectedNodes[i]].hiddenLabel = undefined;
+      }
+    }
+
+    // the main node gets its own color and its label back.
+    // allNodes[selectedNode].color = undefined;
+    allNodes[selectedNode].color = nodeColors[selectedNode];
+    if (allNodes[selectedNode].hiddenLabel !== undefined) {
+      allNodes[selectedNode].label = allNodes[selectedNode].hiddenLabel;
+      allNodes[selectedNode].hiddenLabel = undefined;
+    }
+  } else if (highlightActive === true) {
+    // console.log("highlightActive was true");
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      // allNodes[nodeId].color = "purple";
+      allNodes[nodeId].color = nodeColors[nodeId];
+      // delete allNodes[nodeId].color;
+      if (allNodes[nodeId].hiddenLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].hiddenLabel;
+        allNodes[nodeId].hiddenLabel = undefined;
+      }
+    }
+    highlightActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    // console.log("Nothing was selected");
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        // console.log(allNodes[nodeId]);
+        // allNodes[nodeId].color = {};
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function filterHighlight(params) {
+  allNodes = nodes.get({ returnType: "Object" });
+  // if something is selected:
+  if (params.nodes.length > 0) {
+    filterActive = true;
+    let selectedNodes = params.nodes;
+
+    // hiding all nodes and saving the label
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = true;
+      if (allNodes[nodeId].savedLabel === undefined) {
+        allNodes[nodeId].savedLabel = allNodes[nodeId].label;
+        allNodes[nodeId].label = undefined;
+      }
+    }
+
+    for (let i=0; i < selectedNodes.length; i++) {
+      allNodes[selectedNodes[i]].hidden = false;
+      if (allNodes[selectedNodes[i]].savedLabel !== undefined) {
+        allNodes[selectedNodes[i]].label = allNodes[selectedNodes[i]].savedLabel;
+        allNodes[selectedNodes[i]].savedLabel = undefined;
+      }
+    }
+
+  } else if (filterActive === true) {
+    // reset all nodes
+    for (let nodeId in allNodes) {
+      allNodes[nodeId].hidden = false;
+      if (allNodes[nodeId].savedLabel !== undefined) {
+        allNodes[nodeId].label = allNodes[nodeId].savedLabel;
+        allNodes[nodeId].savedLabel = undefined;
+      }
+    }
+    filterActive = false;
+  }
+
+  // transform the object into an array
+  var updateArray = [];
+  if (params.nodes.length > 0) {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  } else {
+    for (let nodeId in allNodes) {
+      if (allNodes.hasOwnProperty(nodeId)) {
+        updateArray.push(allNodes[nodeId]);
+      }
+    }
+    nodes.update(updateArray);
+  }
+}
+
+function selectNode(nodes) {
+  network.selectNodes(nodes);
+  neighbourhoodHighlight({ nodes: nodes });
+  return nodes;
+}
+
+function selectNodes(nodes) {
+  network.selectNodes(nodes);
+  filterHighlight({nodes: nodes});
+  return nodes;
+}
+
+function highlightFilter(filter) {
+  let selectedNodes = []
+  let selectedProp = filter['property']
+  if (filter['item'] === 'node') {
+    let allNodes = nodes.get({ returnType: "Object" });
+    for (let nodeId in allNodes) {
+      if (allNodes[nodeId][selectedProp] && filter['value'].includes((allNodes[nodeId][selectedProp]).toString())) {
+        selectedNodes.push(nodeId)
+      }
+    }
+  }
+  else if (filter['item'] === 'edge'){
+    let allEdges = edges.get({returnType: 'object'});
+    // check if the selected property exists for selected edge and select the nodes connected to the edge
+    for (let edge in allEdges) {
+      if (allEdges[edge][selectedProp] && filter['value'].includes((allEdges[edge][selectedProp]).toString())) {
+        selectedNodes.push(allEdges[edge]['from'])
+        selectedNodes.push(allEdges[edge]['to'])
+      }
+    }
+  }
+  selectNodes(selectedNodes)
+}</script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+            
+            
+            
+            
+            
+
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 750px;
+                 background-color: #ffffff;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"color": "#97c2fc", "id": 0, "label": "Google LLC", "shape": "dot", "size": 15, "title": "Google LLC"}, {"color": "#97c2fc", "id": 1, "label": "Alphabet Inc.", "shape": "dot", "size": 15, "title": "Alphabet Inc."}, {"color": "#97c2fc", "id": 2, "label": "Google Inc.", "shape": "dot", "size": 15, "title": "Google Inc."}, {"color": "#97c2fc", "id": 3, "label": "Microsoft Corporation", "shape": "dot", "size": 15, "title": "Microsoft Corporation"}, {"color": "#97c2fc", "id": 4, "label": "Microsft Corp.", "shape": "dot", "size": 15, "title": "Microsft Corp."}, {"color": "#97c2fc", "id": 5, "label": "Apple Inc.", "shape": "dot", "size": 15, "title": "Apple Inc."}, {"color": "#97c2fc", "id": 6, "label": "Apple Computers LLC", "shape": "dot", "size": 15, "title": "Apple Computers LLC"}, {"color": "#97c2fc", "id": 7, "label": "Amazon.com Inc.", "shape": "dot", "size": 15, "title": "Amazon.com Inc."}, {"color": "#97c2fc", "id": 8, "label": "International Business Machines", "shape": "dot", "size": 15, "title": "International Business Machines"}, {"color": "#97c2fc", "id": 9, "label": "IBM Corp.", "shape": "dot", "size": 15, "title": "IBM Corp."}, {"color": "#97c2fc", "id": 10, "label": "The Coca-Cola Company", "shape": "dot", "size": 15, "title": "The Coca-Cola Company"}, {"color": "#97c2fc", "id": 11, "label": "PepsiCo Inc.", "shape": "dot", "size": 15, "title": "PepsiCo Inc."}, {"color": "#97c2fc", "id": 12, "label": "ExxonMobil Corporation", "shape": "dot", "size": 15, "title": "ExxonMobil Corporation"}, {"color": "#97c2fc", "id": 13, "label": "Shell Global", "shape": "dot", "size": 15, "title": "Shell Global"}, {"color": "#97c2fc", "id": 14, "label": "BP p.l.c.", "shape": "dot", "size": 15, "title": "BP p.l.c."}, {"color": "#97c2fc", "id": 15, "label": "Siemens AG", "shape": "dot", "size": 15, "title": "Siemens AG"}, {"color": "#97c2fc", "id": 16, "label": "Bosch GmbH", "shape": "dot", "size": 15, "title": "Bosch GmbH"}, {"color": "#97c2fc", "id": 17, "label": "General Electric Co.", "shape": "dot", "size": 15, "title": "General Electric Co."}, {"color": "#97c2fc", "id": 18, "label": "GE Power", "shape": "dot", "size": 15, "title": "GE Power"}, {"color": "#97c2fc", "id": 19, "label": "Walmart Inc.", "shape": "dot", "size": 15, "title": "Walmart Inc."}, {"color": "#97c2fc", "id": 20, "label": "Target Corporation", "shape": "dot", "size": 15, "title": "Target Corporation"}, {"color": "#97c2fc", "id": 21, "label": "Costco Wholesale Corp.", "shape": "dot", "size": 15, "title": "Costco Wholesale Corp."}, {"color": "#97c2fc", "id": 22, "label": "NVIDIA Corp.", "shape": "dot", "size": 15, "title": "NVIDIA Corp."}, {"color": "#97c2fc", "id": 23, "label": "Advanced Micro Devices Inc.", "shape": "dot", "size": 15, "title": "Advanced Micro Devices Inc."}, {"color": "#97c2fc", "id": 24, "label": "Intel Corporation", "shape": "dot", "size": 15, "title": "Intel Corporation"}, {"color": "#97c2fc", "id": 25, "label": "Oracle Corp.", "shape": "dot", "size": 15, "title": "Oracle Corp."}, {"color": "#97c2fc", "id": 26, "label": "SAP SE", "shape": "dot", "size": 15, "title": "SAP SE"}, {"color": "#97c2fc", "id": 27, "label": "Accenture plc", "shape": "dot", "size": 15, "title": "Accenture plc"}, {"color": "#97c2fc", "id": 28, "label": "Deloitte Touche Tohmatsu Limited", "shape": "dot", "size": 15, "title": "Deloitte Touche Tohmatsu Limited"}, {"color": "#97c2fc", "id": 29, "label": "PricewaterhouseCoopers LLP", "shape": "dot", "size": 15, "title": "PricewaterhouseCoopers LLP"}, {"color": "#97c2fc", "id": 30, "label": "Ernst \u0026 Young Global Limited", "shape": "dot", "size": 15, "title": "Ernst \u0026 Young Global Limited"}, {"color": "#97c2fc", "id": 31, "label": "Goldman Sachs Group Inc.", "shape": "dot", "size": 15, "title": "Goldman Sachs Group Inc."}, {"color": "#97c2fc", "id": 32, "label": "JPMorgan Chase \u0026 Co.", "shape": "dot", "size": 15, "title": "JPMorgan Chase \u0026 Co."}, {"color": "#97c2fc", "id": 33, "label": "Bank of America Corp.", "shape": "dot", "size": 15, "title": "Bank of America Corp."}, {"color": "#97c2fc", "id": 34, "label": "Wells Fargo \u0026 Company", "shape": "dot", "size": 15, "title": "Wells Fargo \u0026 Company"}, {"color": "#97c2fc", "id": 35, "label": "Johnson \u0026 Johnson", "shape": "dot", "size": 15, "title": "Johnson \u0026 Johnson"}, {"color": "#97c2fc", "id": 36, "label": "Pfizer Inc.", "shape": "dot", "size": 15, "title": "Pfizer Inc."}, {"color": "#97c2fc", "id": 37, "label": "Novartis AG", "shape": "dot", "size": 15, "title": "Novartis AG"}, {"color": "#97c2fc", "id": 38, "label": "Roche Holding AG", "shape": "dot", "size": 15, "title": "Roche Holding AG"}, {"color": "#97c2fc", "id": 39, "label": "Sanofi S.A.", "shape": "dot", "size": 15, "title": "Sanofi S.A."}, {"color": "#97c2fc", "id": 40, "label": "T-Mobile US Inc.", "shape": "dot", "size": 15, "title": "T-Mobile US Inc."}, {"color": "#97c2fc", "id": 41, "label": "Verizon Communications Inc.", "shape": "dot", "size": 15, "title": "Verizon Communications Inc."}, {"color": "#97c2fc", "id": 42, "label": "AT\u0026T Inc.", "shape": "dot", "size": 15, "title": "AT\u0026T Inc."}, {"color": "#97c2fc", "id": 43, "label": "Samsung Electronics Co. Ltd.", "shape": "dot", "size": 15, "title": "Samsung Electronics Co. Ltd."}, {"color": "#97c2fc", "id": 44, "label": "Sony Group Corporation", "shape": "dot", "size": 15, "title": "Sony Group Corporation"}, {"color": "#97c2fc", "id": 45, "label": "LG Electronics Inc.", "shape": "dot", "size": 15, "title": "LG Electronics Inc."}]);
+                  edges = new vis.DataSet([{"color": {"color": "blue", "highlight": "red"}, "from": 1, "title": "Similarity: 0.00", "to": 0, "value": 0.0}, {"color": {"color": "blue", "highlight": "red"}, "from": 2, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 3, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 4, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 5, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 6, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 7, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 8, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 9, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 10, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 11, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 12, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 13, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 14, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 15, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 16, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 17, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 18, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 19, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 20, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 21, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 22, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 23, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 24, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 25, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 26, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 27, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 28, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 29, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 30, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 31, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 32, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 33, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 34, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 35, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 36, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 37, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 38, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 39, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 40, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 41, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 42, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 43, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 44, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}, {"color": {"color": "blue", "highlight": "red"}, "from": 45, "title": "Similarity: 18446744073709551616.00", "to": 0, "value": 1.844674407370955e+20}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {"physics": {"barnesHut": {"gravitationalConstant": -20000, "centralGravity": 0.3, "springLength": 100, "springConstant": 0.005, "damping": 0.9}, "maxVelocity": 50, "minVelocity": 0.1, "solver": "barnesHut", "stabilization": {"enabled": true, "iterations": 1000, "updateInterval": 25, "onlyDynamicEdges": false, "fit": true}, "timestep": 0.5, "adaptiveTimestep": true}};
+
+                  
+
+
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    </body>
+</html>
